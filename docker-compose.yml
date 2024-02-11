@@ -1,0 +1,103 @@
+version: '3'
+
+services:
+  #CONSUL
+  consul:
+      image: docker.io/hashicorp/consul
+      ports:
+        - "8500:8500"
+
+  #DATABASES
+  orders:
+    container_name: postgres_orderservice
+    image: docker.io/postgres:latest
+    volumes:
+      - "$PWD/postgres:/docker-entrypoint-initdb.d"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+
+  products:
+    container_name: postgres_productservice
+    image: docker.io/postgres:latest
+    volumes:
+      - "$PWD/products:/docker-entrypoint-initdb.d"
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+
+  order_products:
+    container_name: postgres_ordervalidationservice
+    image: docker.io/postgres:latest
+    volumes:
+      - "$PWD/ordersproducts:/docker-entrypoint-initdb.d"
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+
+  #KAFKA
+  kafka:
+    container_name: kafka
+    image: docker.io/bitnami/kafka:3.6
+    ports:
+      - "9092:9092"
+    volumes:
+      - "kafka_data:/bitnami"
+    environment:
+      # KRaft settings
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      # Listeners
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://host.docker.internal:9092
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+
+  #SERVICES
+  order-service:
+    image: haowe/asw-ordermanager:order-service-1.2
+    depends_on:
+      - "consul"
+    deploy:
+      replicas: 2
+
+  product-service:
+    image: haowe/asw-ordermanager:product-service-1.2
+    depends_on:
+      - "consul"
+    deploy:
+     replicas: 2
+
+
+  order-validation-service:
+    image: haowe/asw-ordermanager:order-validation-service-1.2
+    depends_on:
+      - "consul"
+    deploy:
+      replicas: 2
+
+
+  api-gateway:
+    image: haowe/asw-ordermanager:api-gateway-1.2
+    ports:
+      - "8080:8080"
+    depends_on:
+      - "consul"
+    deploy:
+      replicas: 1
+
+
+volumes:
+  kafka_data:
+    driver: local
