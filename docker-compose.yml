@@ -66,14 +66,14 @@ services:
 
   #SERVICES
   order-service:
-    image: haowe/asw-ordermanager:order-service-1.2
+    image: haowe/asw-ordermanager:order-service-1.3
     depends_on:
       - "consul"
     deploy:
       replicas: 2
 
   product-service:
-    image: haowe/asw-ordermanager:product-service-1.2
+    image: haowe/asw-ordermanager:product-service-1.3
     depends_on:
       - "consul"
     deploy:
@@ -81,7 +81,7 @@ services:
 
 
   order-validation-service:
-    image: haowe/asw-ordermanager:order-validation-service-1.2
+    image: haowe/asw-ordermanager:order-validation-service-1.3
     depends_on:
       - "consul"
     deploy:
@@ -89,7 +89,7 @@ services:
 
 
   api-gateway:
-    image: haowe/asw-ordermanager:api-gateway-1.2
+    image: haowe/asw-ordermanager:api-gateway-1.3
     ports:
       - "8080:8080"
     depends_on:
